@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Real-Rime Wage Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="scripts.js"></script>
+  </head>
+
+  <body>
+    <div class="app" role="application" aria-label="Live Wage Calculator">
+      <header>
+        <div>
+          <h1>Real-Time Wage Calculator</h1>
+          <div class="sub">
+            Start a shift, watch time and earnings tick in real time. End a
+            shift to log it.
+          </div>
+        </div>
+        <div class="row" aria-label="Wage Settings">
+          <label for="wage">Hourly wage ($/hr)</label>
+          <input
+            id="wage"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="decimal"
+            placeholder="e.g. 20.00"
+          />
+          <button id="saveWage" class="ghost" title="Save as default">
+            Save
+          </button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card" aria-label="Live Shift">
+          <h2>Live Shift</h2>
+          <div class="display" aria-live="polite">
+            <div class="stat">
+              <div class="label">Elapsed Time</div>
+              <div id="elapsed" class="value">00:00:00</div>
+            </div>
+            <div class="stat">
+              <div class="label">Earnings (pre‑tax)</div>
+              <div id="earned" class="value">$0.00</div>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="start" class="primary">Start Shift</button>
+            <button id="pause" class="secondary" disabled>Pause</button>
+            <button id="resume" class="secondary" disabled>Resume</button>
+            <button id="end" class="danger" disabled>End Shift</button>
+            <button id="reset" class="ghost" disabled>Reset</button>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Shift History">
+          <h2>Shift History</h2>
+          <div class="history">
+            <ul id="history"></ul>
+          </div>
+          <div class="controls">
+            <button id="exportCsv" class="ghost">Export CSV</button>
+            <button id="clearHistory" class="ghost">Clear History</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div>
+          <span class="badge">Log in</span> Log in to save your shift history,
+          timer progress, and wages.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
