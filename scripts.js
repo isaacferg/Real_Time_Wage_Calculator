@@ -13,7 +13,7 @@ const fmtHMS = (sec) => {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 };
 
-// --- Elements ---
+// --- Elements (may not exist on all pages) ---
 const wageInput = $("#wage");
 const saveWageBtn = $("#saveWage");
 const elapsedEl = $("#elapsed");
@@ -33,16 +33,22 @@ const clearHistoryBtn = $("#clearHistory");
 let wage = parseFloat(localStorage.getItem("tim_hourly_wage") || "0") || 0;
 let running = false;
 let paused = false;
-let startTime = 0; // ms
-let accumulatedMs = 0; // ms while paused/resumed
+let startTime = 0;
+let accumulatedMs = 0;
 let rafId = null;
 
+// Ensure history always exists in localStorage
+if (!localStorage.getItem("tim_history")) {
+  localStorage.setItem("tim_history", JSON.stringify([]));
+}
+
 function loadWage() {
-  if (wage > 0) wageInput.value = wage.toFixed(2);
+  if (wageInput && wage > 0) wageInput.value = wage.toFixed(2);
   updateButtons();
 }
 
 function saveWage() {
+  if (!wageInput) return;
   const v = parseFloat(wageInput.value);
   if (!isFinite(v) || v <= -0.1) {
     alert("Please enter a valid hourly wage.");
@@ -55,6 +61,7 @@ function saveWage() {
 }
 
 function updateButtons() {
+  if (!startBtn || !pauseBtn || !resumeBtn || !endBtn || !resetBtn) return;
   startBtn.disabled = running || wage <= 0;
   pauseBtn.disabled = !running || paused;
   resumeBtn.disabled = !running || !paused;
@@ -63,6 +70,7 @@ function updateButtons() {
 }
 
 function updateDisplay() {
+  if (!elapsedEl || !earnedEl) return;
   const elapsedMs = running
     ? Date.now() - startTime + accumulatedMs
     : accumulatedMs;
@@ -111,17 +119,16 @@ function resumeShift() {
 
 function endShift() {
   if (!running) return;
-  // compute final values
   const endMs = paused ? accumulatedMs : Date.now() - startTime + accumulatedMs;
   const seconds = Math.round(endMs / 1000);
   const amount = (seconds / 3600) * (wage || 0);
-  // log to local history
+
   const item = { ts: new Date().toISOString(), seconds, amount, wage };
-  const history = JSON.parse(localStorage.getItem("tim_history") || "[]");
+  const history = JSON.parse(localStorage.getItem("tim_history")) || [];
   history.unshift(item);
   localStorage.setItem("tim_history", JSON.stringify(history));
   renderHistory();
-  // reset live state
+
   running = false;
   paused = false;
   startTime = 0;
@@ -133,7 +140,7 @@ function endShift() {
 }
 
 function resetShift() {
-  if (running && !paused) return; // disallow if actively running
+  if (running && !paused) return;
   running = false;
   paused = false;
   startTime = 0;
@@ -145,7 +152,8 @@ function resetShift() {
 }
 
 function renderHistory() {
-  const history = JSON.parse(localStorage.getItem("tim_history") || "[]");
+  if (!historyList) return;
+  const history = JSON.parse(localStorage.getItem("tim_history")) || [];
   historyList.innerHTML = "";
   for (const h of history) {
     const li = document.createElement("li");
@@ -185,7 +193,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "time_is_money_shifts.csv";
+  a.download = "shifts.csv";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -194,55 +202,47 @@ function exportCsv() {
 
 function clearHistory() {
   if (!confirm("Clear all saved shifts?")) return;
-  localStorage.removeItem("tim_history");
+  localStorage.setItem("tim_history", JSON.stringify([]));
   renderHistory();
 }
 
-// Wire up events
-saveWageBtn.addEventListener("click", saveWage);
-startBtn.addEventListener("click", () => {
-  startShift();
-});
-pauseBtn.addEventListener("click", () => {
-  pauseShift();
-});
-resumeBtn.addEventListener("click", () => {
-  resumeShift();
-});
-endBtn.addEventListener("click", () => {
-  endShift();
-});
-resetBtn.addEventListener("click", () => {
-  resetShift();
-});
-exportCsvBtn.addEventListener("click", exportCsv);
-clearHistoryBtn.addEventListener("click", clearHistory);
+// --- Event wiring (only if element exists) ---
+saveWageBtn?.addEventListener("click", saveWage);
+startBtn?.addEventListener("click", startShift);
+pauseBtn?.addEventListener("click", pauseShift);
+resumeBtn?.addEventListener("click", resumeShift);
+endBtn?.addEventListener("click", endShift);
+resetBtn?.addEventListener("click", resetShift);
+exportCsvBtn?.addEventListener("click", exportCsv);
+clearHistoryBtn?.addEventListener("click", clearHistory);
 
-// Toggle button visibility depending on state via MutationObserver
-const observer = new MutationObserver(() => {
-  pauseBtn.style.display = paused ? "none" : "";
-  resumeBtn.style.display = paused ? "" : "none";
-});
-observer.observe(document.body, {
-  attributes: false,
-  childList: false,
-  subtree: false,
-});
+// Pause/resume toggle observer
+if (pauseBtn && resumeBtn) {
+  const observer = new MutationObserver(() => {
+    pauseBtn.style.display = paused ? "none" : "";
+    resumeBtn.style.display = paused ? "" : "none";
+  });
+  observer.observe(document.body, {
+    attributes: false,
+    childList: false,
+    subtree: false,
+  });
+}
 
-// Initialize
+// --- Initialize ---
 loadWage();
 renderHistory();
 updateDisplay();
 
-// Keyboard shortcuts: Space start/pause, E end
+// Keyboard shortcuts (only on index page)
 document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
+  if (e.code === "Space" && startBtn) {
     e.preventDefault();
     if (!running) startShift();
     else if (!paused) pauseShift();
     else resumeShift();
   }
-  if (e.key.toLowerCase() === "e") {
+  if (e.key.toLowerCase() === "e" && endBtn) {
     endShift();
   }
 });
