@@ -1,4 +1,4 @@
-// --- Utilities ---
+
 const $ = (sel) => document.querySelector(sel);
 const fmtCurrency = (n) =>
   new Intl.NumberFormat(undefined, {
@@ -13,7 +13,6 @@ const fmtHMS = (sec) => {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 };
 
-// --- Elements (may not exist on all pages) ---
 const wageInput = $("#wage");
 const saveWageBtn = $("#saveWage");
 const elapsedEl = $("#elapsed");
@@ -29,7 +28,6 @@ const historyList = $("#history");
 const exportCsvBtn = $("#exportCsv");
 const clearHistoryBtn = $("#clearHistory");
 
-// --- State ---
 let wage = parseFloat(localStorage.getItem("tim_hourly_wage") || "0") || 0;
 let running = false;
 let paused = false;
@@ -37,7 +35,6 @@ let startTime = 0;
 let accumulatedMs = 0;
 let rafId = null;
 
-// Ensure history always exists in localStorage
 if (!localStorage.getItem("tim_history")) {
   localStorage.setItem("tim_history", JSON.stringify([]));
 }
@@ -206,7 +203,6 @@ function clearHistory() {
   renderHistory();
 }
 
-// --- Event wiring (only if element exists) ---
 saveWageBtn?.addEventListener("click", saveWage);
 startBtn?.addEventListener("click", startShift);
 pauseBtn?.addEventListener("click", pauseShift);
@@ -216,7 +212,7 @@ resetBtn?.addEventListener("click", resetShift);
 exportCsvBtn?.addEventListener("click", exportCsv);
 clearHistoryBtn?.addEventListener("click", clearHistory);
 
-// Pause/resume toggle observer
+
 if (pauseBtn && resumeBtn) {
   const observer = new MutationObserver(() => {
     pauseBtn.style.display = paused ? "none" : "";
@@ -231,18 +227,5 @@ if (pauseBtn && resumeBtn) {
 
 // --- Initialize ---
 loadWage();
-renderHistory();
 updateDisplay();
-
-// Keyboard shortcuts (only on index page)
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && startBtn) {
-    e.preventDefault();
-    if (!running) startShift();
-    else if (!paused) pauseShift();
-    else resumeShift();
-  }
-  if (e.key.toLowerCase() === "e" && endBtn) {
-    endShift();
-  }
-});
+renderHistory();
