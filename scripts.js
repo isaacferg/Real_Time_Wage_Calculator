@@ -212,19 +212,6 @@ resetBtn?.addEventListener("click", resetShift);
 exportCsvBtn?.addEventListener("click", exportCsv);
 clearHistoryBtn?.addEventListener("click", clearHistory);
 
-
-if (pauseBtn && resumeBtn) {
-  const observer = new MutationObserver(() => {
-    pauseBtn.style.display = paused ? "none" : "";
-    resumeBtn.style.display = paused ? "" : "none";
-  });
-  observer.observe(document.body, {
-    attributes: false,
-    childList: false,
-    subtree: false,
-  });
-}
-
 // --- Initialize ---
 loadWage();
 updateDisplay();
